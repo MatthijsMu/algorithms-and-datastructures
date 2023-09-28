@@ -1,0 +1,3 @@
+/home/muis/Documents/BSc_Computing_Science/23-24/algorithms-datastructures/algorithms-and-datastructures/example-algs/cmake-build-debug/CMakeFiles/example_algs.dir
+/home/muis/Documents/BSc_Computing_Science/23-24/algorithms-datastructures/algorithms-and-datastructures/example-algs/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/muis/Documents/BSc_Computing_Science/23-24/algorithms-datastructures/algorithms-and-datastructures/example-algs/cmake-build-debug/CMakeFiles/rebuild_cache.dir
