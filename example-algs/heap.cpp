@@ -1,11 +1,12 @@
 #include <vector>
 
-using namespace std;
+// D-ary heap implementation in C++
+// 
 
 template<typename T, size_t D>
 class AryMaxHeap {
 private:
-    vector<T> elems;
+    std::vector<T> elems;
 
     // Compute parent index of node n > 0
     constexpr parent(size_t n) const {
@@ -18,15 +19,15 @@ private:
         return n * D + i;
     }
 
-    // Restores heap property
+    // Restores heap property after 
     void heapify() {
 
     }
 
 public:
-    // Construct empty AryHeap with capacity N
-    AryHeap(size_t N) {
-        elems = new vector<T>(N);
+    // Construct empty AryHeap with capacity 
+    AryHeap(size_t capacity) {
+        elems = new vector<T>(capacity);
     }
 
     T 
