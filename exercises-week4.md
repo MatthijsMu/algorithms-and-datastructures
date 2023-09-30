@@ -1,3 +1,6 @@
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script type="text/x-mathjax-config"> MathJax.Hub.Config({ tex2jax: {inlineMath: [['$', '$']]}, messageStyle: "none" });</script>
+
 ## Exercise 1
 
 1. Q = [{A,0}, {B,inf}, {C,inf}, {D,inf}, {E,inf}, {F,inf}, {G,inf}, {H,inf}]
