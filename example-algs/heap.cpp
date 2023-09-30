@@ -138,4 +138,7 @@ public:
 }
 
 // Since I am a fan of the STL, and really like the idea of providing iterators as interfaces 
-// to containers, 
+// to containers, I will provide an implementation for the heap functions given in <algorithm>
+// in the file stl_style_heap.cpp.
+// But these will have the generality of an arbitrary arity (i.e. D children per parent rather 
+// than always 2).
