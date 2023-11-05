@@ -1,67 +1,90 @@
 from copy import copy
+from collections import deque
 
 class Matching:
     def __init__(self, left, right, allowedMatches):
         self.left = left
         self.right = right
         self.residualGraph = allowedMatches
-        self.matched = set()
-        self.notMatched = set(left)
+        self.notMatchedRight = set(right)
+        self.notMatchedLeft = set(left)
+        self.nrMatches = 0
+
+    def bfs(self, p):
+        visited = set()
+        queue = deque()
+        queue.append(p)
+        parent = dict()
+        while queue:
+            n = queue.popleft()
+            if n not in self.residualGraph:
+                continue
+            
+            for q in filter(lambda x : x not in visited, self.residualGraph[n]):
+                visited.add(q)
+                parent[q] = n
+                if q in self.notMatchedRight:
+                    return True, parent, q
+                else:
+                    queue.append(q)
+                
+        return False, None, None
+
 
     def dfs(self, p):
         visited = set()
-        stack = [(p,0,len(self.residualGraph[p]))]
+        parent = dict()
+        stack = deque()
+        stack.append(p)
         while stack:
-            if stack[-1][1] < stack[-1][2]:
-                # non-leaf call: there are still nbrs to explore. Take the next neighbour, `current`:
-                current = self.residualGraph[stack[-1][0]][stack[-1][1]]
-                # print(current)
-                stack[-1] = (stack[-1][0], stack[-1][1] + 1, stack[-1][2])
-                if current in visited:
-                    continue
-                else:
-                    visited.add(current)
-                    if current in self.right and not current in self.matched:
-                        # found a path ending in an unmatched node (<=> flow augmenting path)
-                        return True, [t[0] for t in stack] + [current] 
-                    elif current in self.residualGraph:
-                        # dfs:  if there are paths present, step into a new stack frame (push to stack)
-                        stack.append((current,0,len(self.residualGraph[current])))
-                        continue
-            else: 
-                # leaf call: tear down current stack frame
-                stack.pop()
+            n = stack.pop()
+            if n not in self.residualGraph:
                 continue
-            
-        return False, []
+            for q in filter(lambda x : x not in visited, self.residualGraph[n]):
+                visited.add(q)
+                parent[q] = n
+                if q in self.notMatchedRight:
+                    return True, parent, q
+                else:
+                    stack.append(q)
+                    
+        return False, None, None
+
+        
             
 
-    def augmentPath(self, path):
-        for p, s in zip(path, path[1:]):
-            self.residualGraph[p].remove(s)
-            if s in self.residualGraph:
-                self.residualGraph[s].append(p)
-            else: 
-                self.residualGraph[s] = [p]
-        self.matched.add(path[0])
-        self.matched.add(path[-1])
-        self.notMatched.remove(path[0])
+    def augmentPath(self, parent, q):
+        if len(parent) == 21:
+            pass
+        self.notMatchedRight.remove(q)
+        while q in parent:
+            self.residualGraph[parent[q]].remove(q)
+            if q not in self.residualGraph:
+                self.residualGraph[q] = [parent[q]]
+            else:
+                self.residualGraph[q].append(parent[q])
+            q = parent[q]
+        
 
     def solveMatching(self):
-        for i, l in enumerate(self.left):
-            # print(i)
-            found, path = self.dfs(l)
+        for l in self.notMatchedLeft:
+            found, parent, q = self.dfs(l)
             if found:
-                self.augmentPath(path)
+                self.augmentPath(parent,q)
+                self.nrMatches += 1
 
+    def getMatching(self):
         return [(self.residualGraph[p][0],p) for p in filter(lambda q: q in self.right and self.residualGraph[q], self.residualGraph.keys())]
+    
+    def getNrMatches(self):
+        return self.nrMatches
     
 class MinChainPartition:
     def __init__(self, poset, relation, topologicalKey):
         self.poset = sorted(poset, key=topologicalKey)
         self.matching = Matching([(p,0) for p in self.poset], \
                                  [(p,1) for p in self.poset], \
-                                 dict([((p,0),[(q,1) for q in filter(lambda x: relation(p,x), self.poset)]) for p in self.poset ]))
+                                 dict([((p,0),[(q,1) for q in filter(lambda x: relation(p,x), self.poset[i:])]) for i,p in enumerate(self.poset) ]))
         self.relation = relation
         self.topologicalKey = topologicalKey
         self.chained = set()
@@ -76,7 +99,10 @@ class MinChainPartition:
 
 
     def solvePartition(self):
-        self.matches = dict([(p,q) for ((p,_),(q,_)) in self.matching.solveMatching()])
+        self.matching.solveMatching()
+
+    def getPartition(self):
+        self.matches = dict([(p,q) for ((p,_),(q,_)) in self.matching.getMatching()])
         chains = []
         for p in sorted(self.poset, key=self.topologicalKey):
             if not p in self.chained:
@@ -84,8 +110,8 @@ class MinChainPartition:
 
         return chains
     
-    def solveNrChains(self):
-        return len(self.poset) - len(self.matching.solveMatching())
+    def getNrOfChains(self):
+        return len(self.poset) - self.matching.getNrMatches()
 
 
 def fitsIn(boxA, boxB):
@@ -107,11 +133,15 @@ def inputBoxes():
     return boxes
 
 
-# matching = Matching([1,2,3,4,5,6], ["A","B","C","D","E"], dict([(1,["A","C"]),(3,["B","E"]),(2,["C"]),(4,["D"]),(6,["D","C"]),(5,["E"])]))
-# print(matching.solveMatching())
+#matching = Matching([1,2,3], ["A","B","C"], dict([(1,["B","A"]),(2,["B","C"]),(3,["C"])]))
+#print(matching.solveMatching())
 
 boxes = inputBoxes()
+print("done with input")
 minChainPartition = MinChainPartition(boxes, fitsIn, volume)
+print("done creating partition problem")
+minChainPartition.solvePartition()
+print("done solving partition problem")
 # partition = minChainPartition.solvePartition()
 # print(partition)
-print(minChainPartition.solveNrChains())
+print(minChainPartition.getNrOfChains())
