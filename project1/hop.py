@@ -15,31 +15,42 @@ class Matching:
         visited.add('s')
         queue = deque()
         queue.append(('s',0))
-        parent = dict()
         depth = 0
         found = False
-        qs = []
+        fronts = []
+        final = set()
         while queue:
             n,d = queue.popleft()
             if d > depth:
                 if found:
-                    return True, parent, qs
+                    return True, fronts
                 else:
                     depth = d
+                    fronts.append([])
             if n not in self.residualGraph:
                 continue
             
             for q in filter(lambda x : x not in visited, self.residualGraph[n]):
                 visited.add(q)
-                parent[q] = n
+                fronts[-1].append(q)
                 if q in self.notMatchedRight:
-                    qs.append(q)
+                    final.add(q)
                     found = True
                     break
                 else:
                     queue.append((q,depth+1))
                 
-        return found, parent, qs
+        return found, fronts
+    
+    def dfs(self, fronts, final):
+        stack = deque()
+        stack.append('s')
+
+        while stack:
+            n = stack.pop()
+            for q in filter(lambda)
+
+        
 
 
     def augmentPaths(self, parent, qs):
