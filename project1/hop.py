@@ -1,97 +1,109 @@
-from copy import copy
 from collections import deque
 
 class Matching:
     def __init__(self, left, right, allowedMatches):
-        self.left = left
-        self.right = right
         self.residualGraph = allowedMatches
         self.residualGraph['s'] = left
         self.notMatchedRight = set(right)
+        self.notMatchedLeft = set(left)
         self.nrMatches = 0
 
     def bfs(self):
         visited = set()
         visited.add('s')
-        queue = deque()
-        queue.append(('s',0))
-        depth = 0
+
+        queue = deque(self.notMatchedLeft)
+        queue.appendleft('s')
+
+        depth = dict()
+        depth['s'] = 0
+        for l in self.notMatchedLeft:
+            depth[l] = 1
+        
+        current_d = 1
+
         found = False
-        fronts = []
-        final = set()
+
+        parents = dict()
+        final = []
         while queue:
-            n,d = queue.popleft()
-            if d > depth:
+            n = queue.popleft()
+            d = depth[n]
+            if d > current_d:
                 if found:
-                    return True, fronts
+                    return True, parents, final
                 else:
-                    depth = d
-                    fronts.append([])
+                    current_d = d
             if n not in self.residualGraph:
                 continue
             
-            for q in filter(lambda x : x not in visited, self.residualGraph[n]):
-                visited.add(q)
-                fronts[-1].append(q)
-                if q in self.notMatchedRight:
-                    final.add(q)
+            for q in filter(lambda x : x not in visited or depth[q] == d+1, self.residualGraph[n]):
+                if q in self.notMatchedRight and q not in visited:
+                    final.append(q)
                     found = True
-                    break
+                elif q not in visited:
+                    queue.append(q)
+                depth[q] = d+1
+                visited.add(q)
+                if q in parents:
+                    parents[q].append(n)
                 else:
-                    queue.append((q,depth+1))
+                    parents[q] = [n]
                 
-        return found, fronts
+        return found, parents, final
     
-    def dfs(self, fronts, final):
-        stack = deque()
-        stack.append('s')
+    def dfs(self, parents, final):
+        
+        used = set()
+        parent = dict()
+        for qf in final:
+            n = qf
+            while n != 's':
+                
+                if list(filter(lambda x: x not in used, parents[n])):
+                    # the first q in parents[n] will become its parent.
+                    # this approach will give a maximal set of augmenting paths.
+                    q = list(filter(lambda x: x not in used, parents[n]))[0]
+                    parent[n] = q
+                    if q != 's':
+                        # we can mark any node we explore while searching, since if we cannot
+                        # find a path through n from one node in final, then we cannot find 
+                        # any path from final to 's' through n, so we don't need to explore
+                        # n ever again.
+                        used.add(q)
+                    else:
+                        self.notMatchedLeft.remove(n)
+                # dfs into n's parent
+                else:
+                    break
+                n = parent[n]
+            # if successful, i.e. if 's' is indeed reached, add qf to used
+            if n == 's':
+                used.add(qf)
 
-        while stack:
-            n = stack.pop()
-            for q in filter(lambda)
-
+        return parent, list(filter(lambda q: q in used, final))
         
 
 
     def augmentPaths(self, parent, qs):
-            usedVertices = set()
-            for q in qs:
-                # First check whether there is still a path of unused vertices through parent
-                # It could happen that a BFS branch forked somewhere, in which case only one
-                # of the two paths to a node in qs should be inverted.
-                checkPath = True
-                p = q
-                while p in parent:
-                    if p in usedVertices:
-                        checkPath = False
-                        break
-                    else:
-                        p = parent[p]
-                if not checkPath:
-                    break
-
-                # If the DFS check above did not fail, we can continue and
-                # reverse all edges along this path in the residual graph, 
-                # increment nrMatches and remove q from the notMatchedRight 
-                # set:
-                self.notMatchedRight.remove(q)
-                self.nrMatches += 1
-                p = q
-                while p in parent:
-                    # We should mark used nodes as used:
-                    usedVertices.add(p)
-                    self.residualGraph[parent[p]].remove(p)
-                    if p not in self.residualGraph:
-                        self.residualGraph[p] = [parent[p]]
-                    else:
-                        self.residualGraph[p].append(parent[p])
-                    p = parent[p]
+        for q in qs:
+            self.notMatchedRight.remove(q)
+            self.nrMatches += 1
+            p = q
+            while p in parent:
+                self.residualGraph[parent[p]].remove(p)
+                if p not in self.residualGraph:
+                    self.residualGraph[p] = [parent[p]]
+                else:
+                    self.residualGraph[p].append(parent[p])                    
+                p = parent[p]
         
 
     def solveMatching(self):
         while True:
-            found, parent, qs = self.bfs()
+            found, parents, qs = self.bfs()
             if found:
+                parent, qs = self.dfs(parents, qs)
                 self.augmentPaths(parent,qs)
             else:
                 break
@@ -104,10 +116,10 @@ class Matching:
     
 class MinChainPartition:
     def __init__(self, poset, relation, topologicalKey):
-        self.poset = sorted(poset, key=topologicalKey)
-        self.matching = Matching([(p,0) for p in self.poset], \
-                                 [(p,1) for p in self.poset], \
-                                 dict([((p,0),[(q,1) for q in filter(lambda x: relation(p,x), self.poset[i:])]) for i,p in enumerate(self.poset) ]))
+        self.poset = poset
+        self.matching = Matching(list(range(len(poset))), \
+                                 list(range(5000, 5000+len(poset))), \
+                                 dict([(i,[j+5000 for j,q in filter(lambda x: relation(p,x[1]), enumerate(self.poset))]) for i,p in enumerate(self.poset) ]))
         self.relation = relation
         self.topologicalKey = topologicalKey
         self.chained = set()
@@ -135,7 +147,6 @@ class MinChainPartition:
     
     def getNrOfChains(self):
         return len(self.poset) - self.matching.getNrMatches()
-
 
 def fitsIn(boxA, boxB):
     return boxA[0] < boxB[0] and boxA[1] < boxB[1] and boxA[2] < boxB[2]
@@ -170,4 +181,3 @@ minChainPartition.solvePartition()
 # partition = minChainPartition.solvePartition()
 # print(partition)
 print(minChainPartition.getNrOfChains())
-
