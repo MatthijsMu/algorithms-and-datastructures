@@ -179,7 +179,7 @@ class MinChainPartition:
         Returns the minimum partition into chains as a list of lists, where the inner lists
         are lists of poset elements, and these represent the chains.
         '''
-        self.matches = dict([(self.poset[i],self.poset[j]) for (i,j) in self.matching.getMatching()])
+        self.matches = dict([(self.poset[i],self.poset[j-len(self.poset)]) for (i,j) in self.matching.getMatching()])
         chains = []
         for p in sorted(self.poset, key=self.topologicalKey):
             if not p in self.chained:
