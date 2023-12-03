@@ -1,0 +1,108 @@
+import numpy as np
+
+def matchDict(d, s):
+    '''
+    A dynamic programming algorithm that determines whether the string
+    s[i]..s[j] can be reconstituted as a sequence of words in d.
+
+    The recursion relation we can use is:
+    s[i]..s[j] can be reconstituted if and only if one of the following holds:
+    
+    * if i == j, s[i] must be in d, otherwise it cannot be reconstituted (a single character cannot be broken up any further)
+    * d(s[i]..s[j]), i.e. s[i]..s[j] is in d.
+    * if s[i]..s[j] is not in d, it can only be reconstituted if it can be split in two
+      subwords s[i]..s[k], s[k+1]..s[j], where i <= k < j.
+
+    So if we denote "s[i]..s[j] can be reconstituted from d" as R[i,j], the above gives a recurrence for R[i,j],
+    where just like in the case of matrix multiplications, we have expressed R[i,j] in a base case or R[i,k], R[k+1,j] for
+    k between i and j, i.e. for smaller substrings.
+
+    We can solve this efficiently by computing R[i,j] for increasing sizes of dist := j-i (= 0,1,..,n-1-0 ) and memoizing
+    the intermediate values in an array R, of which we will only filla and consider the upper triangular (R[i,j] for i<=j) values.
+
+    The complexity of this algorithm is recognized easily in this implementation, because it is very clear what
+    this algorithm does: it fills the upper triangle of an array,
+    which are 1/2 * n * (n-1) entries. The computation of each entry (i,j) is an O(j-i) computation in the worst case.
+
+    Although the summation sum_i sum_j (j-i) is still a bit tedious, we know it depends on n in third order due to the indices
+    appearing as terms in a double summation: this is all we need; the algorithm is O(n^3).
+    '''
+    n = len(s)
+    R = np.empty(shape=(n,n), dtype=bool)
+
+
+    '''
+    Although not specified in the assignment, I would also like to reconstruct the way this algorithm splits the string.
+    So in a separate array Sp, we keep track of which k is used in the split at each stage. We set Sp[i,j] = -1
+    if the word s[i]..s[j] was not split but found directly in the dictionary. If the parsing of s[i]..s[j] failed, we
+    can set Sp[i,j] = -2, for example, although a fail to split can also be deduced from R[i,j]
+    '''
+    Sp = np.empty(shape=(n,n),dtype=np.int64)
+
+    '''
+    The base cases lie on the main diagonal: i==j
+    '''
+    for i in range(n):
+        if s[i:i+1] in d:
+            R[i,i] = True
+            Sp[i,i] = -1
+        else:
+            R[i,i] = False
+            Sp[i,i] = -2
+        
+        
+
+    '''
+    The inductive cases are solved for dist := j-i in 1,2,..,n-2
+        Then iterate over i = 0, .. n-1 and set j = i + dist, and stop
+        Once j (the column index) goes out of bounds, break and go to the next diagonal band.
+    '''
+
+
+    
+    for dist in range(1,n):
+        for i in range(n-1):
+            j = i+dist
+            if j > n-1:
+                break
+            if s[i:j+1] in d:
+                R[i,j] = True
+                Sp[i,j] = -1
+            else:
+                R[i,j] = False
+                Sp[i,j] = -2
+                for k in range(i,j):
+                    if R[i,k] and R[k+1,j]:
+                        R[i,j] = True
+                        Sp[i,j] = k
+
+    return R[0,n-1], Sp
+
+def reconstructParse(s, Sp, i,j):
+    if Sp[i,j] == -1:
+        return f"D({s[i:j+1]})"
+    if Sp[i,j] == -2:
+        return f"FAIL({s[i:j+1]})"
+    else:
+        return f"{reconstructParse(s, Sp, i,Sp[i,j])} | {reconstructParse(s, Sp, Sp[i,j]+1,j)}"
+
+
+
+d = set(["d", "gelei", "kaas", "ik","hebe","gesmeer", "met", "boterham", "en"])
+string1 = "ikhebeenboterhamgesmeerdmetgeleienkaas"
+string2 = "ikhebeenboterhamgesmeerdmetgelienkaas"
+
+FoundSplit1, Split1 = matchDict(d,string1)
+print(FoundSplit1)
+print(reconstructParse(string1, Split1, 0,len(string1)-1))
+
+FoundSplit2, Split2 = matchDict(d,string2)
+print(FoundSplit2)
+print(reconstructParse(string2, Split2, 0,len(string2)-1))
+
+
+
+d2 = set(["a", "aa"])
+small = "aaa"
+FoundSplitSmall, SplitSmall = matchDict(d2,small)
+print(reconstructParse(small, SplitSmall, 0,len(small)-1))

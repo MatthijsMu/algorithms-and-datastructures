@@ -1,0 +1,31 @@
+Idee: dit is te modelleren als dynamic programming probleem: 
+  
+zij f(v, W', t) := "de maximale hoeveelheid water die weg te pompen is als je
+nu in vertex v bent, de pompen in W' nog niet aangezet zijn en je nog t tijd over hebt.
+  
+  
+Dan is:
+  
+  f(v,W',t) = f(v,W'+v, t-10) + 200 * (t-10) if v is in W'
+  
+  f(v,W',t) = max { f(w, W',t-d(w,v)) | w in neighbours(v) }
+  
+Deze recursie oplossen kan met memoizatie: we houden bij met een 0-1-variabele wat de samenstelling van W' is.
+  
+Dat betekent een complexiteit van O(v * t * 2^w).
+  
+Dit kunnen we nog op twee manieren reduceren:
+  
+  1. bereken eerst de kortste paden tussen alle w in W. Dat kan met Dijkstra-met-Fibonnacci-heaps, in
+      O(w * ( e + v log v)). Dan is de dynamische-programmeerfase O((w+1) * t * 2^w)
+      
+  2. deel de ggd van alle tijdstappen eruit: dus als alle tijdstappen een veelvoud van 10 zijn, dan
+     ga je niet f(w,W', 3) uitrekenen want je kunt daar nooit op uitkomen.
+     
+  3. maak w kleiner: dit is zeer wenselijk, want de complexiteit van DP is met 2^w. Je kunt w
+     kleiner maken door alle nodes die je uberhaupt niet kunt bereiken in je gegeven tijd, eruit te 
+     knippen. Dit doe je door middel van DFS, waarbij je de tijd bijhoudt: O(v + e + t) dus 
+     (let er hierbij wel op dat je t met 10 vermindert voor elke waterpomp-knoop
+     die je bezoekt, en dat je niet cyclet).
+  
+De 2^w is een lelijke factor waarover we ontevreden zijn. Is dit onvermijdelijk? Ander idee is om dit probleem te transformeren is tot job-scheduling probleem, maar hoe precies weet ik nog niet: de jobs zijn dan de waterpompen die je bezoekt. Maar de finishing times van de jobs zijn geen getallen die bij de jobs horen, maar eerder bij paren van jobs (je moet rekening houden met de travel times tussen waterpompen).
