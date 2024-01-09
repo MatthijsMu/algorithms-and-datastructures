@@ -1,12 +1,12 @@
 Idee: dit is te modelleren als dynamic programming probleem: 
   
 zij f(v, W', t) := "de maximale hoeveelheid water die weg te pompen is als je
-nu in vertex v bent, de pompen in W' nog niet aangezet zijn en je nog t tijd over hebt.
+nu in vertex v bent, de pompen in W' die aangezet zijn en je nog t tijd over hebt.
   
   
 Dan is:
   
-  f(v,W',t) = f(v,W'+v, t-10) + 200 * (t-10) if v is in W'
+  f(v,W',t) = f(v,W'+v, t-10) + 200 * (t-10) if v is in W en niet in W'
   
   f(v,W',t) = max { f(w, W',t-d(w,v)) | w in neighbours(v) }
   
